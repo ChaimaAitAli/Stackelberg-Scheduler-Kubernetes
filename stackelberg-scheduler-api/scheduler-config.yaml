@@ -1,0 +1,43 @@
+apiVersion: kubescheduler.config.k8s.io/v1beta3
+kind: KubeSchedulerConfiguration
+profiles:
+  - schedulerName: stackelberg-scheduler
+    plugins:
+      queueSort:
+        enabled:
+          - name: PrioritySort
+      preFilter:
+        enabled:
+          - name: stackelberg-scheduler
+      filter:
+        enabled:
+          - name: NodeResourcesFit
+          - name: NodeAffinity
+          - name: NodePorts
+          - name: VolumeRestrictions
+          - name: EBSLimits
+          - name: GCEPDLimits
+          - name: NodeVolumeLimits
+          - name: AzureDiskLimits
+          - name: VolumeBinding
+          - name: VolumeZone
+          - name: PodTopologySpread
+          - name: InterPodAffinity
+      score:
+        enabled:
+          - name: NodeResourcesFit
+            weight: 1
+          - name: NodeAffinity
+            weight: 1
+          - name: VolumeBinding
+            weight: 1
+          - name: InterPodAffinity
+            weight: 1
+          - name: PodTopologySpread
+            weight: 1
+          - name: TaintToleration
+            weight: 1
+leaderElection:
+  leaderElect: true
+  resourceName: stackelberg-scheduler
+  resourceNamespace: kube-system

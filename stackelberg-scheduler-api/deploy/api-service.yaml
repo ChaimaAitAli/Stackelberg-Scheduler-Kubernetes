@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stackelberg-api
+  namespace: kube-system
+  labels:
+    app: stackelberg-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stackelberg-api
+  template:
+    metadata:
+      labels:
+        app: stackelberg-api
+    spec:
+      containers:
+        - name: stackelberg-api
+          image: stackelberg-api:latest # Your API image
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FLASK_ENV
+              value: "production"
+            - name: PORT
+              value: "5000"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stackelberg-api-service
+  namespace: kube-system
+  labels:
+    app: stackelberg-api
+spec:
+  selector:
+    app: stackelberg-api
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+  type: ClusterIP

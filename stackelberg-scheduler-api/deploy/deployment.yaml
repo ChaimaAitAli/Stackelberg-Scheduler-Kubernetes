@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stackelberg-scheduler
+  namespace: kube-system
+  labels:
+    app: stackelberg-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stackelberg-scheduler
+  template:
+    metadata:
+      labels:
+        app: stackelberg-scheduler
+    spec:
+      serviceAccountName: stackelberg-scheduler
+      containers:
+        - name: stackelberg-scheduler
+          image: stackelberg-scheduler:latest
+          imagePullPolicy: Never # For kind cluster development
+          command:
+            - ./stackelberg-scheduler
+            - --config=/etc/kubernetes/scheduler-config.yaml
+            - --v=2
+          volumeMounts:
+            - name: config
+              mountPath: /etc/kubernetes
+          ports:
+            - containerPort: 10259
+              name: webhook
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: STACKELBERG_API_ENDPOINT
+              value: "http://stackelberg-api-service:5000/stackelberg/allocate"
+      volumes:
+        - name: config
+          configMap:
+            name: stackelberg-scheduler-config
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule

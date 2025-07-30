@@ -1,0 +1,52 @@
+# Web Application Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-app-1
+  namespace: default
+  labels:
+    tenant: web-app
+    app: web-application
+spec:
+  schedulerName: stackelberg-scheduler
+  containers:
+    - name: web-app
+      image: k8s.gcr.io/pause:3.2
+      ports:
+        - containerPort: 80
+      # Resources will be set by the scheduler plugin
+      resources: {}
+---
+# Data Processing Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: data-processing-1
+  namespace: default
+  labels:
+    tenant: data-processing
+    app: data-processor
+spec:
+  schedulerName: stackelberg-scheduler
+  containers:
+    - name: data-processor
+      image: k8s.gcr.io/pause:3.2
+      # Resources will be set by the scheduler plugin
+      resources: {}
+---
+# ML Training Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ml-training-1
+  namespace: default
+  labels:
+    tenant: ml-training
+    app: ml-trainer
+spec:
+  schedulerName: stackelberg-scheduler
+  containers:
+    - name: ml-trainer
+      image: k8s.gcr.io/pause:3.2
+      # Resources will be set by the scheduler plugin
+      resources: {}
