@@ -1,0 +1,144 @@
+# Web Application Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app-deployment
+  namespace: default
+  labels:
+    tenant: web-app
+    app: web-application
+    managed-by: stackelberg-scheduler
+spec:
+  replicas: 1 # This will be updated by the scheduler
+  selector:
+    matchLabels:
+      tenant: web-app
+      app: web-application
+  template:
+    metadata:
+      labels:
+        tenant: web-app
+        app: web-application
+    spec:
+      schedulerName: stackelberg-scheduler
+      containers:
+        - name: web-app
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          # Resources will be set by the scheduler plugin
+          resources: {}
+---
+# Data Processing Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-processing-deployment
+  namespace: default
+  labels:
+    tenant: data-processing
+    app: data-processor
+    managed-by: stackelberg-scheduler
+spec:
+  replicas: 1 # This will be updated by the scheduler
+  selector:
+    matchLabels:
+      tenant: data-processing
+      app: data-processor
+  template:
+    metadata:
+      labels:
+        tenant: data-processing
+        app: data-processor
+    spec:
+      schedulerName: stackelberg-scheduler
+      containers:
+        - name: data-processor
+          image: k8s.gcr.io/pause:3.2
+          ports:
+            - containerPort: 8080
+          # Resources will be set by the scheduler plugin
+          resources: {}
+---
+# ML Training Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-training-deployment
+  namespace: default
+  labels:
+    tenant: ml-training
+    app: ml-trainer
+    managed-by: stackelberg-scheduler
+spec:
+  replicas: 1 # This will be updated by the scheduler
+  selector:
+    matchLabels:
+      tenant: ml-training
+      app: ml-trainer
+  template:
+    metadata:
+      labels:
+        tenant: ml-training
+        app: ml-trainer
+    spec:
+      schedulerName: stackelberg-scheduler
+      containers:
+        - name: ml-trainer
+          image: k8s.gcr.io/pause:3.2
+          ports:
+            - containerPort: 9000
+          # Resources will be set by the scheduler plugin
+          resources: {}
+---
+# Services for the applications (optional but recommended)
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-service
+  namespace: default
+  labels:
+    tenant: web-app
+spec:
+  selector:
+    tenant: web-app
+    app: web-application
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-processing-service
+  namespace: default
+  labels:
+    tenant: data-processing
+spec:
+  selector:
+    tenant: data-processing
+    app: data-processor
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-training-service
+  namespace: default
+  labels:
+    tenant: ml-training
+spec:
+  selector:
+    tenant: ml-training
+    app: ml-trainer
+  ports:
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000
+  type: ClusterIP

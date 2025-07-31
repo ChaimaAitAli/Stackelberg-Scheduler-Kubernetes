@@ -41,13 +41,24 @@ rules:
       ["storageclasses", "csinodes", "csidrivers", "csistoragecapacities"]
     verbs: ["get", "list", "watch"]
 
-  # Application workloads
+  # Application workloads - ENHANCED PERMISSIONS
   - apiGroups: [""]
     resources: ["replicationcontrollers"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["replicasets", "statefulsets"]
     verbs: ["get", "list", "watch"]
+  # ADDED: Deployments permissions for replica management
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/status"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "update", "patch"]
+
   - apiGroups: ["policy"]
     resources: ["poddisruptionbudgets"]
     verbs: ["get", "list", "watch"]
@@ -72,6 +83,17 @@ rules:
     resources: ["configmaps"]
     verbs: ["get"]
     resourceNames: ["extension-apiserver-authentication"]
+
+  # ADDED: Additional permissions for comprehensive deployment management
+  # Allow reading all namespaces for cross-namespace operations
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
+
+  # Allow managing services if needed for tenant applications
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
