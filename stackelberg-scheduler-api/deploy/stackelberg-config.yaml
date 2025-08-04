@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stackelberg-config
+  namespace: kube-system
+data:
+  config.yaml: |
+    web_app:
+      max_response_time: 52.5
+      budget: 800.0
+      min_cpu: 0.2
+      min_memory: 0.2
+      desired_replicas: 1
+      min_replicas: 1
+
+    data_processing:
+      min_throughput: 1000.0
+      budget: 1200.0
+      min_cpu: 0.5
+      min_memory: 0.2
+      desired_replicas: 2
+      min_replicas: 2
+
+    ml_training:
+      max_training_time: 8.0
+      budget: 1500.0
+      min_cpu: 0.1
+      min_memory: 0.1
+      desired_replicas: 1
+      min_replicas: 1
+
+    weights:
+      alpha1: 0.3
+      alpha2: 0.2
+      alpha3: 0.5
+
+    normalization:
+      cpu_norm: 2.0
+      memory_norm: 4.0
+
+    latency:
+      base_exponent: 0.7
+      rt_const1: 50.0
+      rt_const2: 500.0
+      rt_exponent: 0.3
+      latency_thresh: 52.5
+      latency_penalty: 100.0
+
+    tenant_b:
+      base_coeff: 120.0
+      memory_exp1: 0.6
+      base_exp: 0.8
+      throughput_coeff: 15.0
+      throughput_cpu_exp: 0.8
+      throughput_mem_exp: 0.4
+      queue_penalty_thresh: 1000.0
+      queue_penalty_coeff: 2.0
+
+    tenant_c:
+      base_coeff: 120.0
+      memory_exp1: 0.5
+      log_const: 1.0
+      training_cpu_exp: 0.7
+      training_mem_exp: 0.3
+      time_penalty_thresh: 8.0
+      time_penalty_coeff: 40.0
+
+    initial_prices:
+      cpu: 5.0
+      memory: 2.0

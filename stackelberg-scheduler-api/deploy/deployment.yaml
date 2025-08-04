@@ -18,7 +18,7 @@ spec:
       serviceAccountName: stackelberg-scheduler
       containers:
         - name: stackelberg-scheduler
-          image: stackelberg-scheduler:latest
+          image: stackelberg-scheduler:v3
           imagePullPolicy: Never # For kind cluster development
           command:
             - ./stackelberg-scheduler
@@ -27,6 +27,9 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/kubernetes
+            - name: config-volume
+              mountPath: /etc/stackelberg/
+              readOnly: true
           ports:
             - containerPort: 10259
               name: webhook
@@ -44,6 +47,9 @@ spec:
         - name: config
           configMap:
             name: stackelberg-scheduler-config
+        - name: config-volume
+          configMap:
+            name: stackelberg-config
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists

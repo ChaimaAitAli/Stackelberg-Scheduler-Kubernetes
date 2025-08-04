@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
-
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -18,6 +18,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"stackelberg-scheduler-api/pkg/config"
+
 )
 
 const (
@@ -506,61 +508,74 @@ func (sp *StackelbergPlugin) getTenantPodCounts(ctx context.Context) (map[string
 }
 
 func (sp *StackelbergPlugin) prepareAPIRequest(totalCPU, totalMemory float64, podCounts map[string]int) *APIRequest {
-	
+	cfg, err := config.LoadConfig("/etc/stackelberg/config.yaml") // make sure to mount this path via ConfigMap
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
 	params := map[string]float64{
-		"web_app_max_response_time":           52.5,
-		"web_app_budget":                      800.0,
-		"web_app_min_cpu":                     0.2,
-		"web_app_min_memory":                  0.2,
-		"web_app_desired_replicas":            1.0,
-		"web_app_min_replicas":                1.0,
-		
-		"data_processing_min_throughput":      1000.0,
-		"data_processing_budget":              1200.0,
-		"data_processing_min_cpu":             0.5,
-		"data_processing_min_memory":          0.2,
-		"data_processing_desired_replicas":    1.0,
-		"data_processing_min_replicas":        1.0,
-		
-		"ml_training_max_training_time":       8.0,
-		"ml_training_budget":                  1500.0,
-		"ml_training_min_cpu":                 0.1,
-		"ml_training_min_memory":              0.1,
-		"ml_training_desired_replicas":        2.0,
-		"ml_training_min_replicas":            2.0,
-		
-		"alpha1":                              0.3,
-		"alpha2":                              0.2,
-		"alpha3":                              0.5,
-		
-		"cpu_norm":                            2.0,
-		"memory_norm":                         4.0,
-		"base_exponent":                       0.7,
-		"rt_const1":                           50.0,
-		"rt_const2":                           500.0,
-		"rt_exponent":                         0.3,
-		"latency_thresh":                      52.5,
-		"latency_penalty":                     100.0,
-		
-		"tenant_b_base_coeff":                 120.0,
-		"tenant_b_memory_exp1":                0.6,
-		"tenant_b_base_exp":                   0.8,
-		"tenant_b_throughput_coeff":           15.0,
-		"tenant_b_throughput_cpu_exp":         0.8,
-		"tenant_b_throughput_mem_exp":         0.4,
-		"tenant_b_queue_penalty_thresh":       1000.0,
-		"tenant_b_queue_penalty_coeff":        2.0,
-		
-		"tenant_c_base_coeff":                 120.0,
-		"tenant_c_memory_exp1":                0.5,
-		"tenant_c_log_const":                  1.0,
-		"tenant_c_training_cpu_exp":           0.7,
-		"tenant_c_training_mem_exp":           0.3,
-		"tenant_c_time_penalty_thresh":        8.0,
-		"tenant_c_time_penalty_coeff":         40.0,
-		
-		"initial_p_cpu":                       5.0,
-		"initial_p_memory":                    2.0,
+		// Web App
+		"web_app_max_response_time": cfg.WebApp.MaxResponseTime,
+		"web_app_budget":            cfg.WebApp.Budget,
+		"web_app_min_cpu":           cfg.WebApp.MinCPU,
+		"web_app_min_memory":        cfg.WebApp.MinMemory,
+		"web_app_desired_replicas":  cfg.WebApp.DesiredReplicas,
+		"web_app_min_replicas":      cfg.WebApp.MinReplicas,
+
+		// Data Processing
+		"data_processing_min_throughput":   cfg.DataProcessing.MinThroughput,
+		"data_processing_budget":           cfg.DataProcessing.Budget,
+		"data_processing_min_cpu":          cfg.DataProcessing.MinCPU,
+		"data_processing_min_memory":       cfg.DataProcessing.MinMemory,
+		"data_processing_desired_replicas": cfg.DataProcessing.DesiredReplicas,
+		"data_processing_min_replicas":     cfg.DataProcessing.MinReplicas,
+
+		// ML Training
+		"ml_training_max_training_time":    cfg.MLTraining.MaxTrainingTime,
+		"ml_training_budget":               cfg.MLTraining.Budget,
+		"ml_training_min_cpu":              cfg.MLTraining.MinCPU,
+		"ml_training_min_memory":           cfg.MLTraining.MinMemory,
+		"ml_training_desired_replicas":     cfg.MLTraining.DesiredReplicas,
+		"ml_training_min_replicas":         cfg.MLTraining.MinReplicas,
+
+		// Weights
+		"alpha1": cfg.Weights.Alpha1,
+		"alpha2": cfg.Weights.Alpha2,
+		"alpha3": cfg.Weights.Alpha3,
+
+		// Normalization
+		"cpu_norm":    cfg.Normalization.CPUNorm,
+		"memory_norm": cfg.Normalization.MemoryNorm,
+
+		// Latency
+		"base_exponent":   cfg.Latency.BaseExponent,
+		"rt_const1":       cfg.Latency.RTConst1,
+		"rt_const2":       cfg.Latency.RTConst2,
+		"rt_exponent":     cfg.Latency.RTExponent,
+		"latency_thresh":  cfg.Latency.LatencyThresh,
+		"latency_penalty": cfg.Latency.LatencyPenalty,
+
+		// Tenant B
+		"tenant_b_base_coeff":          cfg.TenantB.BaseCoeff,
+		"tenant_b_memory_exp1":         cfg.TenantB.MemoryExp1,
+		"tenant_b_base_exp":            cfg.TenantB.BaseExp,
+		"tenant_b_throughput_coeff":    cfg.TenantB.ThroughputCoeff,
+		"tenant_b_throughput_cpu_exp":  cfg.TenantB.ThroughputCPUExp,
+		"tenant_b_throughput_mem_exp":  cfg.TenantB.ThroughputMemExp,
+		"tenant_b_queue_penalty_thresh": cfg.TenantB.QueuePenaltyThresh,
+		"tenant_b_queue_penalty_coeff":  cfg.TenantB.QueuePenaltyCoeff,
+
+		// Tenant C
+		"tenant_c_base_coeff":          cfg.TenantC.BaseCoeff,
+		"tenant_c_memory_exp1":         cfg.TenantC.MemoryExp1,
+		"tenant_c_log_const":           cfg.TenantC.LogConst,
+		"tenant_c_training_cpu_exp":    cfg.TenantC.TrainingCPUExp,
+		"tenant_c_training_mem_exp":    cfg.TenantC.TrainingMemExp,
+		"tenant_c_time_penalty_thresh": cfg.TenantC.TimePenaltyThresh,
+		"tenant_c_time_penalty_coeff":  cfg.TenantC.TimePenaltyCoeff,
+
+		"initial_p_cpu":    cfg.InitialPrices.CPU,
+		"initial_p_memory": cfg.InitialPrices.Memory,
 	}
 
 	return &APIRequest{
