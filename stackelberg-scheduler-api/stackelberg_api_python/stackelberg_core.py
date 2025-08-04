@@ -30,16 +30,16 @@ def run_stackelberg(total_cpu: float, total_memory: float, params: Optional[Dict
         scheduler = StackelbergScheduler(cluster, params)
         result = scheduler.stackelberg_equilibrium(verbose=False)
 
-        #  Validate that allocations exist and are not None
+        # ✅ Validate that allocations exist and are not None
         allocations = result.get("allocations")
         if allocations is None:
             raise ValueError("No allocations returned from stackelberg algorithm")
 
-        #  Validate allocations structure
+        # ✅ Validate allocations structure
         if not isinstance(allocations, list) or len(allocations) != 3:
             raise ValueError(f"Invalid allocations format: expected list of 3 tuples, got {type(allocations)} with length {len(allocations) if isinstance(allocations, list) else 'N/A'}")
 
-        # Build response with validation
+        # ✅ Build response with validation
         response_allocations = []
         for i, allocation in enumerate(allocations):
             if not isinstance(allocation, tuple) or len(allocation) != 3:
@@ -47,7 +47,7 @@ def run_stackelberg(total_cpu: float, total_memory: float, params: Optional[Dict
             
             cpu, mem, replicas = allocation
             
-            #  Sanitize values to ensure JSON compliance
+            # ✅ Sanitize values to ensure JSON compliance
             cpu = sanitize_float(cpu, default=0.1, min_val=0.1, max_val=total_cpu)
             mem = sanitize_float(mem, default=0.5, min_val=0.5, max_val=total_memory)
             replicas = max(int(sanitize_float(replicas, default=1, min_val=1)), 1)
@@ -59,7 +59,7 @@ def run_stackelberg(total_cpu: float, total_memory: float, params: Optional[Dict
                 "replicas": replicas
             })
 
-        #  Validate and sanitize prices
+        # ✅ Validate and sanitize prices
         prices = result.get("prices", (1.0, 0.5))
         if not isinstance(prices, tuple) or len(prices) != 2:
             prices = (1.0, 0.5)  # Fallback prices
@@ -67,7 +67,7 @@ def run_stackelberg(total_cpu: float, total_memory: float, params: Optional[Dict
         cpu_price = sanitize_float(prices[0], default=1.0, min_val=0.1, max_val=1000.0)
         memory_price = sanitize_float(prices[1], default=0.5, min_val=0.1, max_val=1000.0)
 
-        #  Sanitize platform utility
+        # ✅ Sanitize platform utility
         platform_utility = sanitize_float(result.get("platform_utility"), default=-1000.0, min_val=-10000.0, max_val=10000.0)
 
         return {
@@ -82,7 +82,7 @@ def run_stackelberg(total_cpu: float, total_memory: float, params: Optional[Dict
 
     except Exception as e:
         print(f"Error in run_stackelberg: {e}")
-        #  Return emergency fallback response
+        # ✅ Return emergency fallback response
         return get_emergency_response(total_cpu, total_memory)
 
 def get_emergency_response(total_cpu: float, total_memory: float):
@@ -120,3 +120,55 @@ def get_emergency_response(total_cpu: float, total_memory: float):
         "converged": False
     }
 
+# stackelberg_sidecar.py
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import Dict, Optional
+from stackelberg_core import run_stackelberg
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI()
+
+class InputModel(BaseModel):
+    total_cpu: float
+    total_memory: float
+    params: Optional[Dict[str, float]] = None
+
+@app.post("/stackelberg/allocate")
+def allocate(data: InputModel):
+    try:
+        # ✅ Validate input
+        if data.total_cpu <= 0 or data.total_memory <= 0:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid cluster resources: CPU={data.total_cpu}, Memory={data.total_memory}"
+            )
+        
+        logger.info(f"Processing allocation request: CPU={data.total_cpu}, Memory={data.total_memory}")
+        
+        result = run_stackelberg(data.total_cpu, data.total_memory, data.params)
+        
+        # ✅ Validate result before returning
+        if not result or "allocations" not in result:
+            raise HTTPException(status_code=500, detail="Invalid response from Stackelberg algorithm")
+        
+        logger.info("Successfully processed allocation request")
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in allocate endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/health") 
+def health_check():
+    return {"status": "healthy"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=5000)
