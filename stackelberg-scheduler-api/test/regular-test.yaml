@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: regular-web-app
+  namespace: default
+  labels:
+    app: regular-web-app
+    tenant: web-app
+spec:
+  replicas: 2  # Fixed replicas
+  selector:
+    matchLabels:
+      app: regular-web-app
+  template:
+    metadata:
+      labels:
+        app: regular-web-app
+        tenant: web-app
+    spec:
+      # Uses default scheduler
+      containers:
+        - name: web-app
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "300m"     # Fixed resource allocation
+              memory: "500Mi"
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: regular-data-processing
+  namespace: default
+  labels:
+    app: regular-data-processor
+    tenant: data-processing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: regular-data-processor
+  template:
+    metadata:
+      labels:
+        app: regular-data-processor
+        tenant: data-processing
+    spec:
+      containers:
+        - name: data-processor
+          image: nginx:alpine
+          command: ["sleep", "3600"]
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "900m"     # Fixed allocation
+              memory: "300Mi"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: regular-ml-training
+  namespace: default
+  labels:
+    app: regular-ml-trainer
+    tenant: ml-training
+spec:
+  replicas: 1  # Lower replicas due to resource constraints
+  selector:
+    matchLabels:
+      app: regular-ml-trainer
+  template:
+    metadata:
+      labels:
+        app: regular-ml-trainer
+        tenant: ml-training
+    spec:
+      containers:
+        - name: ml-trainer
+          image: nginx:alpine
+          command: ["sleep", "3600"]
+          ports:
+            - containerPort: 9000
+          resources:
+            requests:
+              cpu: "400m"     # Higher fixed allocation
+              memory: "1Gi"

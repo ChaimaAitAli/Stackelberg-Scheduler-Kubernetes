@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app-deployment
+  namespace: default
+  labels:
+    tenant: web-app
+    app: web-application
+    managed-by: stackelberg-scheduler
+spec:
+  replicas: 1  # Will be updated by scheduler
+  selector:
+    matchLabels:
+      tenant: web-app
+      app: web-application
+  template:
+    metadata:
+      labels:
+        tenant: web-app
+        app: web-application
+    spec:
+      schedulerName: stackelberg-scheduler
+      containers:
+        - name: web-app
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          resources: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-processing-deployment
+  namespace: default
+  labels:
+    tenant: data-processing
+    app: data-processor
+    managed-by: stackelberg-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tenant: data-processing
+      app: data-processor
+  template:
+    metadata:
+      labels:
+        tenant: data-processing
+        app: data-processor
+    spec:
+      schedulerName: stackelberg-scheduler
+      containers:
+        - name: data-processor
+          image: nginx:alpine
+          command: ["sleep", "3600"]  # Keep container running
+          ports:
+            - containerPort: 8080
+          resources: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-training-deployment
+  namespace: default
+  labels:
+    tenant: ml-training
+    app: ml-trainer
+    managed-by: stackelberg-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tenant: ml-training
+      app: ml-trainer
+  template:
+    metadata:
+      labels:
+        tenant: ml-training
+        app: ml-trainer
+    spec:
+      schedulerName: stackelberg-scheduler
+      containers:
+        - name: ml-trainer
+          image: nginx:alpine
+          command: ["sleep", "3600"]
+          ports:
+            - containerPort: 9000
+          resources: {}
+

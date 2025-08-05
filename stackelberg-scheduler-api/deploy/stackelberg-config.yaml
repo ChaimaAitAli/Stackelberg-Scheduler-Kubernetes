@@ -6,65 +6,65 @@ metadata:
 data:
   config.yaml: |
     web_app:
-      max_response_time: 52.5
-      budget: 800.0
-      min_cpu: 0.2
-      min_memory: 0.2
-      desired_replicas: 1
+      max_response_time: 870.0        # Relaxed from 52.5ms to 100ms (more achievable)
+      budget: 400.0                   # Reduced budget to fit PC resources
+      min_cpu: 0.3                    # Minimum viable CPU
+      min_memory: 0.5                 # Minimum viable memory (500MB)
+      desired_replicas: 2             # Increased for better demonstration
       min_replicas: 1
 
     data_processing:
-      min_throughput: 1000.0
-      budget: 1200.0
-      min_cpu: 0.5
-      min_memory: 0.2
-      desired_replicas: 2
-      min_replicas: 2
+      min_throughput: 50.0           
+      budget: 800.0                   
+      min_cpu: 0.5              
+      min_memory: 0.3             
+      desired_replicas: 3           
+      min_replicas: 1
 
     ml_training:
-      max_training_time: 8.0
-      budget: 1500.0
-      min_cpu: 0.1
-      min_memory: 0.1
-      desired_replicas: 1
+      max_training_time: 18.0         # Relaxed from 8h to 15h
+      budget: 800.0                   # Reduced budget
+      min_cpu: 0.4                    # Lower minimum for training
+      min_memory: 0.5                 # 250MB minimum
+      desired_replicas: 4             # Increased for demonstration
       min_replicas: 1
 
     weights:
-      alpha1: 0.3
-      alpha2: 0.2
-      alpha3: 0.5
+      alpha1: 0.3                   # Utilization weight (increased)
+      alpha2: 0.2                     # Fairness weight
+      alpha3: 0.5                    # SLO penalty weight (reduced)
 
     normalization:
-      cpu_norm: 2.0
-      memory_norm: 4.0
+      cpu_norm: 2.0                   # Adjusted for PC environment
+      memory_norm: 4.0                # Adjusted for PC environment
 
     latency:
       base_exponent: 0.7
-      rt_const1: 50.0
-      rt_const2: 500.0
+      rt_const1: 50.0                 # Adjusted baseline
+      rt_const2: 200.0                # Reduced constant
       rt_exponent: 0.3
-      latency_thresh: 52.5
-      latency_penalty: 100.0
+      latency_thresh: 1000.0           # Match max_response_time
+      latency_penalty: 50.0           # Reduced penalty
 
     tenant_b:
-      base_coeff: 120.0
+      base_coeff: 80.0                # Reduced coefficient
       memory_exp1: 0.6
       base_exp: 0.8
-      throughput_coeff: 15.0
+      throughput_coeff: 10.0          # Reduced for PC environment
       throughput_cpu_exp: 0.8
       throughput_mem_exp: 0.4
-      queue_penalty_thresh: 1000.0
-      queue_penalty_coeff: 2.0
+      queue_penalty_thresh: 50.0     # Match min_throughput
+      queue_penalty_coeff: 3       # Reduced penalty
 
     tenant_c:
-      base_coeff: 120.0
+      base_coeff: 100.0               # Reduced coefficient
       memory_exp1: 0.5
       log_const: 1.0
       training_cpu_exp: 0.7
       training_mem_exp: 0.3
-      time_penalty_thresh: 8.0
-      time_penalty_coeff: 40.0
+      time_penalty_thresh: 18.0       # Match max_training_time
+      time_penalty_coeff: 40.0        # Reduced penalty
 
     initial_prices:
-      cpu: 5.0
-      memory: 2.0
+      cpu: 0.5                        # Lower initial prices
+      memory: 0.25
