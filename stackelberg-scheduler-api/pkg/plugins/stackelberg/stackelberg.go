@@ -470,6 +470,15 @@ func (sp *StackelbergPlugin) calculateClusterResources(nodes []v1.Node) (float64
 		if node.Spec.Unschedulable {
 			continue
 		}
+		
+		// Skip control-plane nodes
+        if _, isControlPlane := node.Labels["node-role.kubernetes.io/control-plane"]; isControlPlane {
+            continue
+        }
+        // Alternative check for master nodes (older Kubernetes versions)
+        if _, isMaster := node.Labels["node-role.kubernetes.io/master"]; isMaster {
+            continue
+        }
 
 		cpuQuantity := node.Status.Allocatable[v1.ResourceCPU]
 		memoryQuantity := node.Status.Allocatable[v1.ResourceMemory]
@@ -591,29 +600,74 @@ func (sp *StackelbergPlugin) callStackelbergAPI(req *APIRequest) (*APIResponse, 
 		return nil, fmt.Errorf("failed to marshal request: %v", err)
 	}
 
+	// Log the API request details
+	klog.V(2).Infof("Calling Stackelberg API at: %s", sp.apiURL)
+	klog.V(2).Infof("API Request payload: %s", string(jsonData))
+	
+	// For more detailed logging, you can also log specific fields
+	klog.V(2).Infof("API Request - TotalCPU: %.2f, TotalMemory: %.2f GB", req.TotalCPU, req.TotalMemory)
+	
+	// Log key parameters (you can adjust which ones to log based on your needs)
+	if len(req.Params) > 0 {
+		klog.V(2).Infof("API Request Parameters:")
+		for key, value := range req.Params {
+			klog.V(2).Infof("  %s: %.4f", key, value)
+		}
+	}
+
+	// Make the HTTP request
+	klog.V(3).Infof("Sending HTTP POST request to Stackelberg API...")
+	startTime := time.Now()
+	
 	resp, err := sp.client.Post(sp.apiURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
+		klog.Errorf("HTTP request to Stackelberg API failed: %v", err)
 		return nil, fmt.Errorf("HTTP request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
+	// Log response timing and status
+	duration := time.Since(startTime)
+	klog.V(3).Infof("Stackelberg API responded in %v with status: %d", duration, resp.StatusCode)
+
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
+		klog.Errorf("Stackelberg API returned error status %d: %s", resp.StatusCode, string(body))
 		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		klog.Errorf("Failed to read Stackelberg API response body: %v", err)
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
+
+	// Log the response payload (optional - be careful with sensitive data)
+	klog.V(3).Infof("API Response payload: %s", string(body))
 
 	var apiResp APIResponse
 	err = json.Unmarshal(body, &apiResp)
 	if err != nil {
+		klog.Errorf("Failed to unmarshal Stackelberg API response: %v", err)
 		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
 	}
 
-	klog.V(4).Infof("Stackelberg API response: %+v", apiResp)
+	// Log summary of the response
+	klog.V(3).Infof("Stackelberg API response - Converged: %t, Platform Utility: %.4f", 
+		apiResp.Converged, apiResp.PlatformUtility)
+	klog.V(3).Infof("Resource prices - CPU: %.4f, Memory: %.4f", 
+		apiResp.Prices.CPU, apiResp.Prices.Memory)
+	
+	// Log allocations summary
+	if len(apiResp.Allocations) > 0 {
+		klog.V(2).Infof("Received %d tenant allocations:", len(apiResp.Allocations))
+		for _, allocation := range apiResp.Allocations {
+			klog.V(2).Infof("  Tenant: %s, CPU: %.2f, Memory: %.2f GB, Replicas: %d", 
+				allocation.Tenant, allocation.CPUPerReplica, allocation.MemoryPerReplica, allocation.Replicas)
+		}
+	}
+
+	klog.V(3).Infof("Stackelberg API response: %+v", apiResp)
 	return &apiResp, nil
 }
 

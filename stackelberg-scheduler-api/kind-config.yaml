@@ -16,24 +16,6 @@ nodes:
       - containerPort: 30000
         hostPort: 30000
         protocol: TCP
-  - role: worker
-    labels:
-      worker-type: "compute"
-    extraMounts:
-      - hostPath: /var/run/docker.sock
-        containerPath: /var/run/docker.sock
-  - role: worker
-    labels:
-      worker-type: "compute"
-    extraMounts:
-      - hostPath: /var/run/docker.sock
-        containerPath: /var/run/docker.sock
-  - role: worker
-    labels:
-      worker-type: "compute"
-    extraMounts:
-      - hostPath: /var/run/docker.sock
-        containerPath: /var/run/docker.sock
 networking:
   disableDefaultCNI: false
   kubeProxyMode: "iptables"

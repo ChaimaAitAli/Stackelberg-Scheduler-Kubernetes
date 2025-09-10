@@ -1,23 +1,34 @@
+# Scenario 3: Production-Typical Allocation
+# Web apps typically get more resources, ML training gets compute-heavy resources
+# Data processing gets balanced resources
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: regular-web-app
+  name: regular-web-app-typical
   namespace: default
   labels:
-    app: regular-web-app
     tenant: web-app
+    app: web-application
+    scenario: production-typical
 spec:
-  replicas: 2  # Fixed replicas
+  replicas: 3  # Higher replicas for web apps (availability)
   selector:
     matchLabels:
-      app: regular-web-app
+      tenant: web-app
+      app: web-application
   template:
     metadata:
       labels:
-        app: regular-web-app
         tenant: web-app
+        app: web-application
     spec:
-      # Uses default scheduler
+      schedulerName: default-scheduler
+      tolerations:
+      - key: "mocklet.io/provider"
+        operator: "Equal"
+        value: "mock"
+        effect: "NoSchedule"
       containers:
         - name: web-app
           image: nginx:alpine
@@ -25,30 +36,40 @@ spec:
             - containerPort: 80
           resources:
             requests:
-              cpu: "300m"     # Fixed resource allocation
-              memory: "500Mi"
-
+              cpu: "15000m"      # 15 CPU per replica (moderate)
+              memory: "30Gi"     # 30 GB per replica (web apps need memory)
+            limits:
+              cpu: "15000m"
+              memory: "30Gi"
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: regular-data-processing
+  name: regular-data-processing-typical
   namespace: default
   labels:
-    app: regular-data-processor
     tenant: data-processing
+    app: data-processor
+    scenario: production-typical
 spec:
-  replicas: 2
+  replicas: 2  # Moderate replicas for data processing
   selector:
     matchLabels:
-      app: regular-data-processor
+      tenant: data-processing
+      app: data-processor
   template:
     metadata:
       labels:
-        app: regular-data-processor
         tenant: data-processing
+        app: data-processor
     spec:
+      schedulerName: default-scheduler
+      tolerations:
+      - key: "mocklet.io/provider"
+        operator: "Equal"
+        value: "mock"
+        effect: "NoSchedule"
       containers:
         - name: data-processor
           image: nginx:alpine
@@ -57,29 +78,40 @@ spec:
             - containerPort: 8080
           resources:
             requests:
-              cpu: "900m"     # Fixed allocation
-              memory: "300Mi"
+              cpu: "10000m"      # 10 CPU per replica (CPU-intensive)
+              memory: "40Gi"     # 40 GB per replica (data needs memory)
+            limits:
+              cpu: "10000m"
+              memory: "40Gi"
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: regular-ml-training
+  name: regular-ml-training-typical
   namespace: default
   labels:
-    app: regular-ml-trainer
     tenant: ml-training
+    app: ml-trainer
+    scenario: production-typical
 spec:
-  replicas: 1  # Lower replicas due to resource constraints
+  replicas: 1  # Single replica for ML training (typical)
   selector:
     matchLabels:
-      app: regular-ml-trainer
+      tenant: ml-training
+      app: ml-trainer
   template:
     metadata:
       labels:
-        app: regular-ml-trainer
         tenant: ml-training
+        app: ml-trainer
     spec:
+      schedulerName: default-scheduler
+      tolerations:
+      - key: "mocklet.io/provider"
+        operator: "Equal"
+        value: "mock"
+        effect: "NoSchedule"
       containers:
         - name: ml-trainer
           image: nginx:alpine
@@ -88,5 +120,8 @@ spec:
             - containerPort: 9000
           resources:
             requests:
-              cpu: "400m"     # Higher fixed allocation
-              memory: "1Gi"
+              cpu: "25000m"      # 25 CPU (ML needs heavy compute)
+              memory: "80Gi"     # 80 GB (ML needs lots of memory)
+            limits:
+              cpu: "25000m"
+              memory: "80Gi"

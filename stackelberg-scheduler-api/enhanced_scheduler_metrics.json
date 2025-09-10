@@ -1,0 +1,124 @@
+{
+  "stackelberg": {
+    "total_pods": 7,
+    "running_pods": 7,
+    "failed_pods": 0,
+    "resource_usage": {
+      "cpu": 80.17999999999999,
+      "memory": 184.16999999526888
+    },
+    "tenant_metrics": {
+      "web-app": {
+        "pod_count": 1,
+        "running_pods": 1,
+        "avg_cpu": 29.44,
+        "avg_memory": 58.889999999664724,
+        "total_cpu": 29.44,
+        "total_memory": 58.889999999664724
+      },
+      "data-processing": {
+        "pod_count": 4,
+        "running_pods": 4,
+        "avg_cpu": 7.63,
+        "avg_memory": 19.489999999292195,
+        "total_cpu": 30.52,
+        "total_memory": 77.95999999716878
+      },
+      "ml-training": {
+        "pod_count": 2,
+        "running_pods": 2,
+        "avg_cpu": 10.11,
+        "avg_memory": 23.65999999921769,
+        "total_cpu": 20.22,
+        "total_memory": 47.31999999843538
+      }
+    },
+    "scheduling_time": 0,
+    "resource_efficiency": 81.37844444349822,
+    "slo_violations": {
+      "web-app": {
+        "violated": false,
+        "severity": 0,
+        "metric_value": 55.00057254798952,
+        "threshold": 55
+      },
+      "data-processing": {
+        "violated": false,
+        "severity": 0,
+        "metric_value": 1000.2201891083813,
+        "threshold": 1000.0
+      },
+      "ml-training": {
+        "violated": true,
+        "severity": 0.021900250500402823,
+        "metric_value": 1.5328503757506042,
+        "threshold": 1.5
+      }
+    },
+    "total_slo_violations": 1,
+    "avg_slo_severity": 0.007300083500134274,
+    "timestamp": "2025-08-18T15:38:06.652251",
+    "scheduler": "stackelberg-scheduler"
+  },
+  "regular": {
+    "total_pods": 6,
+    "running_pods": 6,
+    "failed_pods": 0,
+    "resource_usage": {
+      "cpu": 90.0,
+      "memory": 250.0
+    },
+    "tenant_metrics": {
+      "web-app": {
+        "pod_count": 3,
+        "running_pods": 3,
+        "avg_cpu": 15.0,
+        "avg_memory": 30.0,
+        "total_cpu": 45.0,
+        "total_memory": 90.0
+      },
+      "data-processing": {
+        "pod_count": 2,
+        "running_pods": 2,
+        "avg_cpu": 10.0,
+        "avg_memory": 40.0,
+        "total_cpu": 20.0,
+        "total_memory": 80.0
+      },
+      "ml-training": {
+        "pod_count": 1,
+        "running_pods": 1,
+        "avg_cpu": 25.0,
+        "avg_memory": 80.0,
+        "total_cpu": 25.0,
+        "total_memory": 80.0
+      }
+    },
+    "scheduling_time": 0,
+    "resource_efficiency": 100.0,
+    "slo_violations": {
+      "web-app": {
+        "violated": true,
+        "severity": 0.12755480757838675,
+        "metric_value": 62.01551441681127,
+        "threshold": 55
+      },
+      "data-processing": {
+        "violated": true,
+        "severity": 0.17216220312327085,
+        "metric_value": 827.8377968767292,
+        "threshold": 1000.0
+      },
+      "ml-training": {
+        "violated": false,
+        "severity": 0,
+        "metric_value": 0.5643454052641856,
+        "threshold": 1.5
+      }
+    },
+    "total_slo_violations": 2,
+    "avg_slo_severity": 0.09990567023388586,
+    "timestamp": "2025-08-18T15:39:41.090800",
+    "scheduler": "default-scheduler"
+  }
+}

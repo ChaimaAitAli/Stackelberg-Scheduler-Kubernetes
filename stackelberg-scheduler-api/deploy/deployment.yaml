@@ -18,7 +18,7 @@ spec:
       serviceAccountName: stackelberg-scheduler
       containers:
         - name: stackelberg-scheduler
-          image: stackelberg-scheduler:v3
+          image: stackelberg-scheduler:log
           imagePullPolicy: Never # For kind cluster development
           command:
             - ./stackelberg-scheduler

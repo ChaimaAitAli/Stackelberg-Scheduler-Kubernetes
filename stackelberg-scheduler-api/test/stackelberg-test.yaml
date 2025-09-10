@@ -20,6 +20,11 @@ spec:
         app: web-application
     spec:
       schedulerName: stackelberg-scheduler
+      tolerations:
+      - key: "mocklet.io/provider"
+        operator: "Equal"
+        value: "mock"
+        effect: "NoSchedule"
       containers:
         - name: web-app
           image: nginx:alpine
@@ -50,6 +55,11 @@ spec:
         app: data-processor
     spec:
       schedulerName: stackelberg-scheduler
+      tolerations:
+      - key: "mocklet.io/provider"
+        operator: "Equal"
+        value: "mock"
+        effect: "NoSchedule"
       containers:
         - name: data-processor
           image: nginx:alpine
@@ -81,6 +91,11 @@ spec:
         app: ml-trainer
     spec:
       schedulerName: stackelberg-scheduler
+      tolerations:
+      - key: "mocklet.io/provider"
+        operator: "Equal"
+        value: "mock"
+        effect: "NoSchedule"
       containers:
         - name: ml-trainer
           image: nginx:alpine
@@ -88,4 +103,3 @@ spec:
           ports:
             - containerPort: 9000
           resources: {}
-
